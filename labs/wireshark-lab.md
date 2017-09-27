@@ -31,8 +31,21 @@ A mensagem _GET_ foi enviada aos 242ms desde o início do experimento e a mensag
 **4. Perguntas sobre HTTP com GET condicional:**
     <ol type="a">
     **<li>Inspecione o conteúdo da primeira solicitação HTTP GET do seu navegador para o servidor. Você vê uma linha contendo "IF-MODIFIED-SINCE" na mensagem HTTP GET?</li>**
-    **<li>Inspecione o conteúdo da resposta do servidor da primeira solicitação do seu navegador (referente ao item a). O servidor retorna explicitamente o conteúdo do arquivo? Justifique sua resposta. Inspecione o conteúdo da segunda solicitação HTTP GET do seu navegador para o servidor. Você vê uma linha “IF-MODIFIED-SINCE:” na mensagem HTTP GET? Se a sua resposta é sim, quais são as informações que seguem o “IF-MODIFIED-SINCE”?</li>**
+    Não existe nenhuma linha na mensagem contendo a flag _IF-MODIFIED-SINCE_.
+    **<li>Inspecione o conteúdo da resposta do servidor da primeira solicitação do seu navegador (referente ao item a). O servidor retorna explicitamente o conteúdo do arquivo? Justifique sua resposta. <br \>Inspecione o conteúdo da segunda solicitação HTTP GET do seu navegador para o servidor. Você vê uma linha “IF-MODIFIED-SINCE:” na mensagem HTTP GET? Se a sua resposta é sim, quais são as informações que seguem o “IF-MODIFIED-SINCE”?</li>**
+    O servidor retorna explicitamente o conteúdo da página HTML na seção de dados de texto da mensagem.
+    <br />
+    A mensagem retornada é:
+    <p>
+    ```<html>``` <br />
+    ``` Congratulations!  You've downloaded the first Wireshark lab file!\n``` <br />
+    ```</html>```
+    </p>
+    A mensagem de _GET_ não possui a flag _IF-MODIFIED-SINCE_, pois esta é a primeira vez em que a página é carregada, portanto ela não está salva no cache do navegador e precisa ser totalmente enviada na mensagem _OK_ do protocolo HTTP. <br />
+    Ao se executar a requisição uma segunda vez (recarregando a página), a mensagem _GET_ possui a seguinte especificação:
+    <p>```If-Modified-Since: Tue, 26 Sep 2017 05:59:01 GMT\r\n``` </p>
     **<li>Qual é o código de status de HTTP e frase retornada do servidor em resposta à segunda solicitação HTTP GET (referente ao item c)? O servidor retorna explicitamente o conteúdo do arquivo? Explicar.</li>**
+    A mensagem de resposta possui o _status code_ 304, indicando que a página não foi modificada desde a data especificada na mensagem _GET_. Desta forma, a mensagem não possui a página completa, pois não é necessária.
     </ol>
 
 **5. Perguntas sobre recuperação de documentos longos em HTTP:**
