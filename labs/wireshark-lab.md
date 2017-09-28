@@ -81,9 +81,20 @@ A mensagem _GET_ foi enviada aos 242ms desde o início do experimento e a mensag
 **9. Perguntas sobre TCP:**
     <ol type="a">
     **<li>Qual é o endereço IP de gaia.cs.umass.edu? Qual é o número da porta pela qual o servidor está recebimento e enviando segmentos TCP para esta conexão?</li>**
+    O endereço IP do servidor é 128.119.245.12. A porta pela qual o servidor estabelece a conexão é a de número 80.
     **<li>Considere o segmento TCP que contém o HTTP POST como o primeiro segmento na conexão TCP. Quais são os números de sequência dos seis primeiros segmentos na conexão TCP (incluindo o segmento que contém o HTTP POST)? Em que momento (hora do dia) foi enviado cada segmento? Quando foi recebido o ACK de cada segmento? Dada a diferença dos tempos nos quais cada segmento TCP foram enviados e quando a sua confirmação foi recebida, qual é o valor RTT para cada um dos seis segmentos?**</li><br />
-    **Observação: o Wireshark permite traçar o RTT para cada um dos segmentos TCP enviados. Selecione um segmento TCP na listagem de pacotescapturados e selecione: Statistics->TCP Stream Graph- >Round Trip Time Graph.**
+    **Observação: o Wireshark permite traçar o RTT para cada um dos segmentos TCP enviados. Selecione um segmento TCP na listagem de pacotescapturados e selecione: Statistics->TCP Stream Graph- >Round Trip Time Graph.**<br />
+    As mensagens TCP enviadas foram:<br />
+    <ul>
+    <li> Pacote 4, com número de sequência 1, enviado às 10:44:20.596858. ACK recebido às 10:44:20.624318, com RTT de aproximadamente 27ms. </li>
+    <li> Pacote 5, com número de sequência 566, enviado às 10:44:20.612118. ACK recebido às 10:44:20.647675, com RTT de aproximadamente 63ms.</li>
+    <li> Pacote 7, com número de sequência 2026, enviado às 10:44:20.624407. ACK recebido às 10:44:20.694466, com RTT de aproximadamente 70ms.</li>
+    <li> Pacote 8, com número de sequência 3486, enviado às 10:44:20.625071. ACK recebido às 10:44:20.739499, com RTT de aproximadamente 114ms.</li>
+    <li> Pacote 10, com número de sequência 4946, enviado às 10:44:20.647786. ACK recebido às 10:44:20.787680, com RTT de aproximadamente 140ms.</li>
+    <li> Pacote 11, com número de sequência 6406, enviado às 10:44:20.648538. ACK recebido às 10:44:20.838183, com RTT de aproximadamente 190ms.</li>
+    </ul>
     **<li>Existem segmentos retransmitidos? Qual informação você procurou a fim de responder esta pergunta?</li>**
+    Não existem segmentos retransmitidos, pois ao se visualizar o gráfico Time/Sequence, que mostra o número da sequência enviado em cada tempo, pode-se verificar que não há o envio do mesmo número da sequência em dois momentos distintos.
     </ol>
 
 **10. É possível identificar onde começa e onde termina a fase slowstart do TCP? É possível identificar onde o “congestion avoidance” assume o controle?**
