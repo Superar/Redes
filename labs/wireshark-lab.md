@@ -115,6 +115,7 @@ A mensagem _GET_ foi enviada aos 242ms desde o início do experimento e a mensag
     </ol>
 
 **10. É possível identificar onde começa e onde termina a fase slowstart do TCP? É possível identificar onde o “congestion avoidance” assume o controle?**
+</br>
 É possível perceber a fase *slow start* nos primeiros 124ms de troca de pacotes. A partir dos 304ms, o número de pacotes enviados por vez é constante, portanto pode-se identificar o término da fase *slow start*. A partir deste momento, o *congestion avoidance* assume o controle.
 
 **11. Selecione um pacote UDP e responda:**
@@ -122,8 +123,15 @@ A mensagem _GET_ foi enviada aos 242ms desde o início do experimento e a mensag
     **<li>Ao consultar as informações exibidas no campo de conteúdo do pacote do Wireshark para o pacote selecionado, determinar:</li>**
     <ul>
     **<li>O comprimento (em bytes) de cada um dos campos de cabeçalho UDP.</li>**
+    Source Port: 2 bytes</br>
+    Destination Port: 2 bytes</br>
+    Length: 2 bytes</br>
+    Checksum: 2 bytes</br>
     **<li>O número máximo de bytes que podem ser incluídos no payload UDP.</li>**
+    65.527 bytes, pois o número máximo que o atributo length pode assumir é 65.535 bytes, porém 8 bytes são do próprio cabeçalho.
     **<li>O maior número possível de porta de origem.</li>**
+    65,535
     </ul>
     **<li>O valor no campo “Length” é o comprimento de que? Verifique a sua resposta com o valor do pacote UDP selecionado.</li>**
+    É o tamanho total do pacote UDP, contando o cabeçalho e o dado transportado.
     </ol>
