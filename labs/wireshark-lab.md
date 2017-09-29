@@ -115,6 +115,7 @@ A mensagem _GET_ foi enviada aos 242ms desde o início do experimento e a mensag
     </ol>
 
 **10. É possível identificar onde começa e onde termina a fase slowstart do TCP? É possível identificar onde o “congestion avoidance” assume o controle?**
+É possível perceber a fase *slow start* nos primeiros 124ms de troca de pacotes. A partir dos 304ms, o número de pacotes enviados por vez é constante, portanto pode-se identificar o término da fase *slow start*. A partir deste momento, o *congestion avoidance* assume o controle.
 
 **11. Selecione um pacote UDP e responda:**
     <ol type="a">
