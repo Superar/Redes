@@ -1,6 +1,6 @@
 # Laboratório Wireshark
 #### Alunos: Marcio Lima Inácio - 587265
-#### Felipe Sampaio de Souza
+#### Felipe Sampaio de Souza - 619523
 
 ***
 
@@ -80,7 +80,7 @@ A mensagem _GET_ foi enviada aos 242ms desde o início do experimento e a mensag
     **<li>Examine a mensagem de resposta DNS. Quantas respostas “answers” são fornecidas? O que cada uma dessas respostas contém?</li>**
     Houveram em torno de 5 respostas. Cada resposta tinha o domínio pesquisado, alguns atributos (type, class, cname) e um endereço (addr)
     **<li>Localize o pacote TCP SYN (enviado pelo seu computador e posterior à mensagem de resposta DNS). O endereço IP de destino, do pacote SYN, corresponde a qualquer um dos endereços IP fornecidos na mensagem de resposta DNS?</li>**
-    Sim, corresponde a um deles    
+    Sim, corresponde a um deles
     **<li>A página web http://www.ietf.org contém imagens. Antes de recuperar cada imagem, o seu computador emite novas consultas DNS?</li>**
     Não, ele passa a utilizar o endereço ip adquirido na consulta dns anterior.
     </ol>
