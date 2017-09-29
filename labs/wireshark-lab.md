@@ -92,7 +92,7 @@ A mensagem _GET_ foi enviada aos 242ms desde o início do experimento e a mensag
     **<li>Examine a mensagem de consulta DNS. Qual é o tipo (Type) desta consulta DNS? A mensagem de consulta contém alguma resposta (answers)?</li>**
     É do tipo A e não possui nenhuma answer.
     **<li>Fornecer um screenshot (captura de tela) que justifique as suas respostas.</li>**
-    ![Captura de tela: dns](/imagens/dns.png)
+    ![Captura de tela: dns](https://github.com/Superar/Redes/blob/master/labs/imagens/dns.png)
     </ol>
 
 **9. Perguntas sobre TCP:**
