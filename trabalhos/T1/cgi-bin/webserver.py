@@ -1,22 +1,33 @@
 #!/usr/bin/python
 
-# Import modules for CGI handling 
 import cgi, cgitb 
+import subprocess
 
-# Create instance of FieldStorage 
-form = cgi.FieldStorage() 
 
-# Get data from fields
-first_name = form.getvalue('first_name')
-last_name  = form.getvalue('last_name')
+result = []
 
-print "Content-type:text/html\r\n\r\n"
-print "<html>"
-print "<head>"
-print "<title>Hello - Second CGI Program</title>"
-print "</head>"
-print "<body>"
-print "<h1>Oi</h1>"
-print "<h2>Hello %s %s</h2>" % (first_name, last_name)
-print "</body>"
-print "</html>"
+try:
+	form = cgi.FieldStorage()
+	
+	maq1_ps = form.getvalue('maq1_ps')
+	valor = form.getvalue('maq1-ps')
+	p = subprocess.Popen(['ps'], stdout=subprocess.PIPE)
+	for s in p.stdout.readlines():
+		result.append(s)
+	p.stdout.close()
+except KeyError:
+	print 'Content-type:text/html'
+	print
+	print "<html><body> ERROR </body></html>"
+else:
+	print 'Content-type:text/html'
+	print
+	print '<html>'
+	if maq1_ps:
+		print '<h1>Selecionado: %s</h1>' % maq1_ps
+		for s in result:
+			print '<h1>%s</h1>' % s
+
+	else:
+		print '<h1>Selecione algo</h1>'
+	print '</html>'
