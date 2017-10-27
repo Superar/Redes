@@ -12,38 +12,41 @@ exec_list = list()
 
 try:
     form = cgi.FieldStorage()
+    form_str = '#'.join(form) + '#'
+    regex = 'maq[1-3]_' + '(?:' + '|'.join(executaveis) + ')' + '(?=#)'
 
-    for executavel in executaveis:
-        comandos = re.findall('maq[1-3]_' + executavel + '#', '#'.join(form))
-        for elem in comandos:
-            exec_list.append(elem[:-1].split('_'))
+    # Encontra todos os comandos a serem executados
+    exec_list = [elem.split('_') for elem in re.findall(regex, form_str)]
 
     for prog in exec_list:
         result.append(prog[0] + ' executando ' + prog[1])
-        args = [prog[1]]
+        args = [prog[1]]  # Primeiro argumento precisa ser o nome do programa
 
-        if prog[0] + '_' + prog[1] + '_args' in form:
-            for tok in form.getvalue(prog[0] + '_' + prog[1] + '_args').split(' '):
-                args.append(tok)
+        # Encontra os argumentos e insere na lista args
+        args_key = prog[0] + '_' + prog[1]
+        if args_key in form:
+            args.append(tok for tok in form.getvalue(args_key).split(' '))
 
+        # Cria subprocesso e executa
         p = subprocess.Popen(args, stdout=subprocess.PIPE)
+        # Adiciona na lista de resultados o output
         for s in p.stdout.readlines():
             result.append(s)
         p.stdout.close()
 
 except KeyError:
-    print 'Content-type:text/html'
+    print('Content-type:text/html')
     print
-    print '<html><body> ERROR </body></html>'
+    print('<html><body> ERROR </body></html>')
 
 else:
-    print 'Content-type:text/html'
+    print('Content-type:text/html')
     print
-    print '<html>'
+    print('<html>')
     if len(result) > 0:
         for s in result:
-            print '<h1>%s</h1>' % s
+            print('<h1>%s</h1>' % s)
     else:
-        print '<h1>Selecione algo</h1>'
+        print('<h1>Selecione algo</h1>')
 
-    print '</html>'
+    print('</html>')
