@@ -6,9 +6,10 @@ import subprocess
 import re
 
 
-result = list()
+send_backend = list()
 executaveis = ['ps', 'df', 'finger', 'uptime']
 exec_list = list()
+result = list()
 
 try:
     form = cgi.FieldStorage()
@@ -19,22 +20,30 @@ try:
     exec_list = [elem.split('_') for elem in re.findall(regex, form_str)]
 
     for prog in exec_list:
-        result.append(prog[0] + ' executando ' + prog[1])
-        args = [prog[1]]  # Primeiro argumento precisa ser o nome do programa
+        args = prog  # Maquina e nome do programa
 
         # Encontra os argumentos e insere na lista args
-        args_key = prog[0] + '_' + prog[1]
+        args_key = prog[0] + '_' + prog[1] + '_args'
         if args_key in form:
-            args.append(tok for tok in form.getvalue(args_key).split(' '))
+            args = args + form.getvalue(args_key).split(' ')
 
-        # Cria subprocesso e executa
-        p = subprocess.Popen(args, stdout=subprocess.PIPE)
-        # Adiciona na lista de resultados o output
-        for s in p.stdout.readlines():
-            result.append(s)
-        p.stdout.close()
+        send_backend.append(args)
 
-except KeyError:
+    # Cria processo do backend
+    p = subprocess.Popen(['python', 'backend.py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    
+    # Envia comandos no formato: maquina#comando#args
+    for item in send_backend:
+        p.stdin.write('#'.join(item))
+        p.stdin.write('\n')
+    p.stdin.close()
+
+    # Recebe resposta do backend
+    for s in p.stdout.readlines():
+        result.append(s)
+    p.stdout.close()
+
+except:
     print('Content-type:text/html')
     print
     print('<html><body> ERROR </body></html>')
@@ -50,3 +59,4 @@ else:
         print('<h1>Selecione algo</h1>')
 
     print('</html>')
+
