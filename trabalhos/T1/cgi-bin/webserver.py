@@ -5,13 +5,13 @@ import cgitb
 import subprocess
 import re
 
-
 send_backend = list()
 executaveis = ['ps', 'df', 'finger', 'uptime']
 exec_list = list()
 result = list()
 
 try:
+    # Recupera as informacoes do form enviado
     form = cgi.FieldStorage()
     form_str = '#'.join(form) + '#'
     regex = 'maq[1-3]_' + '(?:' + '|'.join(executaveis) + ')' + '(?=#)'
@@ -59,4 +59,3 @@ else:
         print('<h1>Selecione algo</h1>')
 
     print('</html>')
-
