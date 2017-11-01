@@ -52,47 +52,61 @@ class Header:
     def set_options(self, options):
         self.options = options
     
-    def decode_header(self, packet):
-       try:
-        word = struct.unpack('!HH', packet.read(4))
-        field = word[0] >> 8
+    def decode(self, packet):
+        try:
+            word = struct.unpack('!HH', packet.read(4))
+            field = word[0] >> 8
        
-        self.version = field >> 4
-        print self.version
-        self.ihl = field & 0x0f
-        print self.ihl
-        self.total_length = word[1]
-        print self.total_length
+            self.version = field >> 4
+            self.ihl = field & 0x0f
+            self.total_length = word[1]
         
-        word = struct.unpack('!HH', packet.read(4))
+            word = struct.unpack('!HH', packet.read(4))
         
-        self.id = word[0]
-        print self.id
-        self.flags = word[1] >> 13
-        print self.flags
+            self.id = word[0]
+            self.flags = word[1] >> 13
 
-        word = struct.unpack('!HH', packet.read(4))
+            word = struct.unpack('!HH', packet.read(4))
         
-        self.tl = word[0] >> 8
-        print self.tl
-        self.protocol = word[0] & 0x00FF
-        print self.protocol
-        self.hc = word[1]
-        print self.hc
+            self.tl = word[0] >> 8
+            self.protocol = word[0] & 0x00FF
+            self.hc = word[1]
         
-        word = struct.unpack('!II', packet.read(8))
+            word = struct.unpack('!II', packet.read(8))
        
-        print 'enderecos'
-        self.src = word[0]
-        print self.src
-        self.dest = word[1]
-        print self.dest
-        nro_options = self.ihl - 5
+            self.src = word[0]
+            self.dest = word[1]
+            nro_options = self.ihl - 5
 
-        self.options = packet.read(nro_options * 4)
-        print self.options
-       except Exception as e:
-        print e
+            self.options = packet.read(nro_options * 4)
+        except Exception as e:
+            print e
+
+    def encode(self):
+        header_bytes = io.BytesIO()
+        
+        byte = ((self.version << 4) | self.ihl) << 8
+        header_bytes.write(struct.pack('!H', byte))
+
+        header_bytes.write(struct.pack('!H', self.total_length))
+        
+        header_bytes.write(struct.pack('!H', self.id))
+
+        header_bytes.write(struct.pack('!H', self.flags << 13))
+        
+        byte = (self.tl << 8) | self.protocol
+        header_bytes.write(struct.pack('!H', byte))
+
+        header_bytes.write(struct.pack('!H', self.hc))
+
+        header_bytes.write(struct.pack('!I', self.src))
+         
+        header_bytes.write(struct.pack('!I', self.dest))
+
+        header_bytes.write(self.options)
+
+        return header_bytes
+
 
 class Packet:
     
@@ -100,9 +114,15 @@ class Packet:
         self.header = Header()
         self.content = 0
 
-    def decode_packet(self, packet):
-        self.content = self.header.decode_header(packet)
-        print packet.read(5)
+    def decode(self, packet):
+        # Faz a decodificacao dos primeiros bytes do cabecalho
+        self.header.decode(packet)
+        # Como o cabecalho foi consumido, o restante e conteudo do pacote
+        self.content = packet.read()
+    
+    def set_content(content):
+        self.content = content
+        
 
 f = open('header_example', 'rb')
 
@@ -112,4 +132,11 @@ b.seek(0)
 
 p = Packet()
 
-p.decode_packet(b)
+p.decode(b)
+
+g = open('teste', 'wb')
+a = p.header.encode()
+a.seek(0)
+g.write(a.read())
+
+g.close
