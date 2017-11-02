@@ -1,6 +1,7 @@
 import io
 import struct
 from socket import inet_aton
+from socket import inet_ntoa
 
 class Header:
 
@@ -32,11 +33,24 @@ class Header:
         # Options (x bits)
         self.options = None
 
+    def __str__(self):
+        return  'Version: ' + str(self.version) \
+              + '\nIHL: ' + str(self.ihl) \
+              + '\nTotal Length: ' + str(self.total_length) \
+              + '\nID: ' + str(self.id) \
+              + '\nFlags: ' + str(self.flags) \
+              + '\nTTL: ' + str(self.ttl) \
+              + '\nProtocol: ' + str(self.protocol) \
+              + '\nHeader Checksum: ' + str(self.hc) \
+              + '\nSource: ' + inet_ntoa(self.src) \
+              + '\nDestination: ' + inet_ntoa(self.dest) \
+              + '\nOptions: ' + str(self.options) 
+
     def decode(self, packet):
         try:
             word = struct.unpack('!HH', packet.read(4))
             field = word[0] >> 8
-       
+             
             self.version = field >> 4
             self.ihl = field & 0x0f
             self.total_length = word[1]
@@ -52,8 +66,6 @@ class Header:
             self.protocol = word[0] & 0x00FF
             self.hc = word[1]
         
-            #word = struct.unpack('!II', packet.read(8))
-       
             self.src = packet.read(4)
             self.dest = packet.read(4)
             
@@ -98,6 +110,7 @@ class Header:
      
     def setup(self, size_content):
         self.ihl = 5
+        
         if self.options is not None:
             self.ihl = self.ihl + len(self.options)/4
 
@@ -144,9 +157,6 @@ class Message:
 
         self.header.setup(0)
 
-        print self.header.protocol
-        print self.header.src
-
         return 0
         
     def response(self, header_request, content):
@@ -170,56 +180,11 @@ class Message:
 
 
     def encode(self):
-        print self.header.protocol
-        print self.header.src
         msg_byte = self.header.encode()
 
         if self.content is not None:
             msg_byte.write(self.content)
-
+        #msg_byte.seek(0)
         return msg_byte
 
 
-#f = open('header_example', 'rb')
-
-#b = io.BytesIO(f.read())
-
-#b.seek(0)
-
-import subprocess
-
-send = Message()
-
-send.request('127.0.0.1','ps', 'aux', 1) 
-
-request = Message()
-
-encoded = send.encode()
-encoded.seek(0)
-
-request.decode(encoded)
-
-print request.header.protocol
-print request.header.options
-
-get = Message()
-
-if request.header.protocol == 1:
-    cmd = ['ps']
-else:
-    cmd = ['ls']
-
-print str(request.header.options)
-
-#cmd.append(str(request.header.options))
-cmd.append('aux')
-content = subprocess.check_output(cmd)
-get.response(request.header,content)
-
-pkt = get.encode()
-pkt.seek(0)
-g = open('teste', 'wb')
-
-g.write(pkt.read())
-
-#g.close

@@ -3,6 +3,8 @@ import threading
 import sys
 import getopt
 
+from protocolo import *
+
 # Definicao do localhost
 HOST = '127.0.0.1'
 # Definicao da porta padrao
@@ -27,9 +29,22 @@ class Daemon(threading.Thread):
                 # Recebe os dados atraves do socket
                 data = self.dest_sock.recv(tam)
                 
+                f = io.BytesIO(data)
+                #f.write(data)
+                #f.seek(0)
+
+                #print sys.getsizeof(f)
+                #print f 
+                #print 'recebido'
                 # Se houve dados
                 if data:
-                    self.dest_sock.send(data)
+                    request = Message()
+                    request.decode(f)
+                    #print request.header.version
+                    #print request.header.options
+                    print request.header
+                    
+                    #self.dest_sock.send("foi")
                 else:
                     raise error('Desconectado')
             except:
@@ -75,3 +90,40 @@ if __name__=='__main__':
     for t in threads:
         t.join()
 
+'''import subprocess
+
+send = Message()
+
+send.request('127.0.0.1','ps', 'aux', 1) 
+
+request = Message()
+
+encoded = send.encode()
+encoded.seek(0)
+
+request.decode(encoded)
+
+print request.header.protocol
+print request.header.options
+
+get = Message()
+
+if request.header.protocol == 1:
+    cmd = ['ps']
+else:
+    cmd = ['ls']
+
+print str(request.header.options)
+
+cmd.append(str(request.header.options))
+#cmd.append('aux')
+content = subprocess.check_output(cmd)
+get.response(request.header,content)
+
+pkt = get.encode()
+pkt.seek(0)
+g = open('teste', 'wb')
+
+g.write(pkt.read())
+
+'''
