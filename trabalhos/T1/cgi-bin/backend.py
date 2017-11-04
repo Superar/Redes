@@ -23,13 +23,19 @@ for maq in maq_ports:
     regex = '(?:' + maq + r')\S+(?=\n)'
     exec_list = re.findall(regex, commands_str)
     exec_list = [c.split('#') for c in exec_list]
-    
-    sock.connect(('localhost', maq_ports[maq]))
+   
+    try: 
+        sock.connect(('localhost', maq_ports[maq]))
+    except Exception as ex:
+        print 'backend.py'
+        print ex
 
     for cmd in exec_list:
         msg = Message()
         msg.request('127.0.0.2', cmd[1:], 1)
         data = msg.encode()
         data.seek(0)
-        print msg.header
-        sock.sendall(data.read())
+        msg.header
+        print sock.sendall(data.read())
+
+    sock.shutdown()
