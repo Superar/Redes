@@ -25,14 +25,11 @@ for maq in maq_ports:
     exec_list = [c.split('#') for c in exec_list]
     
     sock.connect(('localhost', maq_ports[maq]))
-    
+
     for cmd in exec_list:
         msg = Message()
-        msg.request('127.0.0.2', cmd[1], cmd[2], 1)
-        print sys.getsizeof(msg)
+        msg.request('127.0.0.2', cmd[1:], 1)
         data = msg.encode()
         data.seek(0)
-        print sys.getsizeof(data)
-        print sock.sendall(data.read())
-        #print msg.header
-    #print(exec_list)
+        print msg.header
+        sock.sendall(data.read())
