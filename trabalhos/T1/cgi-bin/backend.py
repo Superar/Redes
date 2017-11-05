@@ -23,39 +23,24 @@ for maq in maq_ports:
     regex = '(?:' + maq + r')\S+(?=\n)'
     exec_list = re.findall(regex, commands_str)
     exec_list = [c.split('#') for c in exec_list]
-    
-    sock.connect(('localhost', maq_ports[maq]))
-    
+   
+    try: 
+        sock.connect(('localhost', maq_ports[maq]))
+    except Exception as ex:
+        print 'backend.py'
+        print ex
+
     for cmd in exec_list:
         msg = Message()
-        msg.request('127.0.0.2', cmd[1], cmd[2], 1)
-        print sys.getsizeof(msg)
+        msg.request('127.0.0.2', cmd[1:], 1)
         data = msg.encode()
         data.seek(0)
+
         print sys.getsizeof(data)
         sock.sendall(data.read())
         
         data = sock.recv(1024)
         #sock.close()
         print len(data)
-        print data
-        '''while not data: 
-            try:
-                # Recebe os dados atraves do socket
-                data = sock.recv(1024)
-                f = io.BytesIO(data)
-                print "oi"
-                print sys.getsizeof(data)
-                print sys
-                # Se houve dados
-                if data:
-                    request = Message()
-                    request.decode(f)
-
-                    print request.header
-                    
-                else:
-                    raise error('Desconectado')
-            except:
-
-                sock.close()'''
+    
+    sock.shutdown()

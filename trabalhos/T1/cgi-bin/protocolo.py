@@ -1,4 +1,5 @@
 import io
+import re
 import struct
 from socket import inet_aton
 from socket import inet_ntoa
@@ -77,6 +78,7 @@ class Header:
             nro_options = self.ihl - 5
 
             self.options = packet.read(nro_options * 4)
+            self.options = re.sub(b'\x00', '', self.options)
 
         except Exception as e:
             print e
@@ -149,7 +151,7 @@ class Header:
     def setup(self, size_content):
         self.ihl = 5
         if self.options is not None:
-            self.ihl = self.ihl + len(self.options)/4
+            self.ihl = self.ihl + len(self.options)//4
 
             if (len(self.options) % 4) > 0:
                 self.ihl = self.ihl + 1
@@ -171,31 +173,21 @@ class Message:
         self.header.decode(packet)
         # Como o cabecalho foi consumido, o restante e conteudo
         self.content = packet.read()
-    def request(self, addr, cmd, args, id_request, ttl=10):
+    
+    def request(self, addr, args, id_request, ttl=10):
         self.header.id = id_request
 
         self.header.ttl = ttl
 
         self.header.flags = 0
         
-        self.header.protocol = COMANDO_DICT[cmd]
-
-       # if cmd == 'ps':
-         #   self.header.protocol = 1
-       # elif cmd == 'df':
-          #  self.header.protocol = 2
-        #elif cmd == 'finger':
-           # self.header.protocol = 3
-        #elif cmd == 'uptime':
-            #self.header.protocol = 4
-        #else:
-         #   return -1
+        self.header.protocol = COMANDO_DICT[args[0]]
 
         self.header.src = inet_aton('127.0.0.1')
 
         self.header.dest = inet_aton(addr)
 
-        self.header.options = args
+        self.header.options = ' '.join(args[1:])
 
         self.header.setup(0)
 
