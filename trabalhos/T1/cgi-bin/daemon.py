@@ -11,9 +11,19 @@ HOST = '127.0.0.1'
 PORT = 9000
 
 class Daemon(threading.Thread):
+    ''' Classe representante de um Daemon
+        O Daemon deve receber um pacote conforme especificado no arquivo protocolo.py,
+        executar os comandos necessarios e enviar a resposta com o resultado da execucao
+        do comando
+    '''
 
     # Cria a thread de conexao com ip, porta e o socket para resposta
     def __init__(self, ip, port, sock):
+        ''' Construtor. Inicia a Thread
+            e inicializa as configuracoes do socket do cliente
+            (de onde recebera e para onde enviara os pacotes)
+        '''
+ 
         threading.Thread.__init__(self)
         self.ip = ip
         self.port = port
@@ -21,6 +31,11 @@ class Daemon(threading.Thread):
 
     # Execucao da thread
     def run(self):
+        ''' Codigo a ser executado pela Thread.
+            O codigo deve receber um pacote de dados da conexao aberta,
+            decodifica-lo, executar o comando com os parametros indicados
+            e enviar pela mesma conexao o pacote com a saida do comando indicado
+        '''
         
         tam = 1024
 
@@ -29,20 +44,27 @@ class Daemon(threading.Thread):
                 # Recebe os dados atraves do socket
                 data = self.dest_sock.recv(tam)
                 buffer = io.BytesIO(data)
-                # Se houve dados
+
+                # Se recebeu dados dados
                 if data:
-                   
+                    # Decodifica o pacote 
                     request = Message()
                     request.decode(buffer)
                     print request.header
+
+                    # Gera a resposta correspondente
                     response = self.get_response(request)            
                     print response.header
                     print response.content
+
+                    # Cria o pacote com a resposta
                     response = response.encode()
                     response.seek(0)
 
+                    # Envia resposta
                     self.dest_sock.sendall(response.read())
                 else:
+                    # Backend mandou um shutdown
                     print 'Desconectado'
                     self.dest_sock.close()
                     raise error('Desconectado')
@@ -51,19 +73,29 @@ class Daemon(threading.Thread):
                 return False
     
     def get_response(self, request):
+        ''' Executa comandos em um sub-processo
+            De acordo com uma requisicao recebida em um pacote conforme indicado
+            em protocolo.py
+        '''
+
+        # Cria lista com nome do comando a ser executado e argumentos
         cmd = [request.header.get_protocol_command()]
         if request.header.options is not None and len(request.header.options) > 0:
            cmd.append(str(request.header.options))
 
+        # Abre um sub-processo e executa o comando
+        # Armazenando as saidas de stdout e stderr
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         content = p.stdout.read()
         erro = p.stderr.read()
         p.stdout.close()
         p.stderr.close()
 
+        # Saida com erro
         if len(content) == 0:
             content = erro
 
+        # Retorna a saida de execucao
         print content
         msg = Message()
         msg.response(request.header, content)
@@ -72,7 +104,9 @@ class Daemon(threading.Thread):
 
 if __name__=='__main__':
     argv = sys.argv[1:]
-    
+   
+    # Tratamento das opcoes na inicializacao do daemon em linha de comando
+    # Argumento indica a porta a ser utilizada 
     try:
       opts, args = getopt.getopt(argv,'hp:',['help','port='])
     except getopt.GetoptError:
