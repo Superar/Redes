@@ -5,6 +5,8 @@ import re
 from protocolo import *
 
 
+exclude_list = ['|', '>', ';']
+
 maq_ports = {'maq1': 9000,
            'maq2': 9000,
            'maq3': 9000}
@@ -18,6 +20,12 @@ sock.bind((HOST, PORT))
 
 commands = sys.stdin.readlines()
 commands_str = ''.join(commands)
+
+# Verifica se algum comando possui algum dos itens em exclude_list
+# Retorna erro caso sim
+if [x for x in exclude_list if x in commands_str]:
+    print 'Argumentos invalidos: ' + str(exclude_list)
+    raise ValueError
 
 for maq in maq_ports:
     regex = '(?:' + maq + r')\S+(?=\n)'
