@@ -28,20 +28,17 @@ class Daemon(threading.Thread):
             try:
                 # Recebe os dados atraves do socket
                 data = self.dest_sock.recv(tam)
-                f = io.BytesIO(data)
-                print sys.getsizeof(data)                
+                buffer = io.BytesIO(data)
                 # Se houve dados
                 if data:
                     request = Message()
-                    request.decode(f)
+                    request.decode(buffer)
 
-                    print request.header
                     response = self.get_response(request)            
-                   
-                    response = request.encode()
+                    response = response.encode()
                     response.seek(0)
-                    print 'envia'
-                    self.dest_sock.sendall("Olar tudo bem")
+
+                    self.dest_sock.sendall(response.read())
                 else:
                     raise error('Desconectado')
             except:
@@ -103,41 +100,3 @@ if __name__=='__main__':
 
     for t in threads:
         t.join()
-
-'''import subprocess
-
-send = Message()
-
-send.request('127.0.0.1','ps', 'aux', 1) 
-
-request = Message()
-
-encoded = send.encode()
-encoded.seek(0)
-
-request.decode(encoded)
-
-print request.header.protocol
-print request.header.options
-
-get = Message()
-
-if request.header.protocol == 1:
-    cmd = ['ps']
-else:
-    cmd = ['ls']
-
-print str(request.header.options)
-
-cmd.append(str(request.header.options))
-#cmd.append('aux')
-content = subprocess.check_output(cmd)
-get.response(request.header,content)
-
-pkt = get.encode()
-pkt.seek(0)
-g = open('teste', 'wb')
-
-g.write(pkt.read())
-
-'''

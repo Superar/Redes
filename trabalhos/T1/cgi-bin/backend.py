@@ -36,11 +36,14 @@ for maq in maq_ports:
         data = msg.encode()
         data.seek(0)
 
-        print sys.getsizeof(data)
         sock.sendall(data.read())
         
-        data = sock.recv(1024)
-        #sock.close()
-        print len(data)
+        data_response = sock.recv(1024)
+        buffer = io.BytesIO(data_response)
+        response = Message()
+        response.decode(buffer)
+
+        print response.header
+        print response.content
     
     sock.shutdown()

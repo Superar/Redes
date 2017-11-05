@@ -206,9 +206,7 @@ class Message:
         self.header.dest = header_request.src
 
         self.content = content
-        print "aquuuuuuui"
         self.header.setup(len(content))
-        print self.content
         return 0
 
 
@@ -217,6 +215,5 @@ class Message:
 
         if self.content is not None:
             msg_bytes.write(self.content)
-       
         return msg_bytes
 
