@@ -40,6 +40,8 @@ class Daemon(threading.Thread):
 
                     self.dest_sock.sendall(response.read())
                 else:
+                    print 'Desconectado'
+                    self.dest_sock.close()
                     raise error('Desconectado')
             except:
                 self.dest_sock.close()
