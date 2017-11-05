@@ -2,7 +2,7 @@ import socket
 import threading
 import sys
 import getopt
-
+import subprocess
 from protocolo import *
 
 # Definicao do localhost
@@ -28,29 +28,43 @@ class Daemon(threading.Thread):
             try:
                 # Recebe os dados atraves do socket
                 data = self.dest_sock.recv(tam)
-                
                 f = io.BytesIO(data)
-                #f.write(data)
-                #f.seek(0)
-
-                #print sys.getsizeof(f)
-                #print f 
-                #print 'recebido'
+                print sys.getsizeof(data)                
                 # Se houve dados
                 if data:
                     request = Message()
                     request.decode(f)
-                    #print request.header.version
-                    #print request.header.options
+
                     print request.header
-                    
-                    #self.dest_sock.send("foi")
+                    response = self.get_response(request)            
+                   
+                    response = request.encode()
+                    response.seek(0)
+                    print 'envia'
+                    self.dest_sock.sendall("Olar tudo bem")
                 else:
                     raise error('Desconectado')
             except:
                 self.dest_sock.close()
                 return False
+    
+    def get_response(self, request):
+        
+        cmd = [request.header.get_protocol_command()]
+         
+        if request.header.options is not None:
+            cmd.append(str(request.header.options))
 
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        content = p.stdout.read()
+        p.stdout.close()
+
+        msg = Message()
+        
+        msg.response(request.header, content)
+        print msg.content
+        return msg
+        
 
 if __name__=='__main__':
     argv = sys.argv[1:]

@@ -3,6 +3,11 @@ import struct
 from socket import inet_aton
 from socket import inet_ntoa
 
+COMANDO_DICT = {'ps':1,
+                'df':2,
+                'finger':3,
+                'uptime':4}
+
 class Header:
 
     def __init__(self):
@@ -107,18 +112,53 @@ class Header:
                     header_bytes.write(struct.pack('B', 0))
 
         return header_bytes
-     
+    
+    def get_header_checksum(self):
+        hc = (self.version << 4) | self.ihl
+        
+        hc = hc + (self.total_length >> 8) + (self.total_length & 0x00FF)
+
+        hc = hc + (self.id >> 8) + (self.id & 0x00FF)
+
+        hc = hc + (self.flags << 5)
+
+        hc = hc + self.ttl
+
+        hc = hc + self.protocol
+        
+        sum_addr = 0
+        for i in range(0,4,2):
+            byte = struct.unpack('!H', self.src[i] + self.src[i + 1])[0]
+            sum_addr = sum_addr +  (byte >> 8) + (byte & 0x00ff)
+
+            byte = struct.unpack('!H', self.dest[i] + self.dest[i + 1])[0]
+            sum_addr = sum_addr +  (byte >> 8) + (byte & 0x00ff)
+
+        hc = hc + sum_addr
+
+        if self.options is not None:
+
+            for i in range(0, len(self.options) - 1, 2):
+                byte = struct.unpack('!H', self.options[i] + self.options[i+1])[0]
+                hc = hc + byte
+
+        # precisa arrumar quando impar
+
+        return hc        
+
     def setup(self, size_content):
         self.ihl = 5
-        
         if self.options is not None:
             self.ihl = self.ihl + len(self.options)/4
 
             if (len(self.options) % 4) > 0:
                 self.ihl = self.ihl + 1
-
         self.total_length = (self.ihl * 4) + size_content
+        self.hc = self.get_header_checksum()
 
+    def get_protocol_command(self):
+        dict_contrario = dict(zip(COMANDO_DICT.values(), COMANDO_DICT.keys()))
+        return dict_contrario[self.protocol]
 
 class Message:
     
@@ -138,16 +178,18 @@ class Message:
 
         self.header.flags = 0
         
-        if cmd == 'ps':
-            self.header.protocol = 1
-        elif cmd == 'df':
-            self.header.protocol = 2
-        elif cmd == 'finger':
-            self.header.protocol = 3
-        elif cmd == 'uptime':
-            self.header.protocol = 4
-        else:
-            return -1
+        self.header.protocol = COMANDO_DICT[cmd]
+
+       # if cmd == 'ps':
+         #   self.header.protocol = 1
+       # elif cmd == 'df':
+          #  self.header.protocol = 2
+        #elif cmd == 'finger':
+           # self.header.protocol = 3
+        #elif cmd == 'uptime':
+            #self.header.protocol = 4
+        #else:
+         #   return -1
 
         self.header.src = inet_aton('127.0.0.1')
 
@@ -161,7 +203,6 @@ class Message:
         
     def response(self, header_request, content):
         self.header.id = header_request.id
-
         self.header.ttl = header_request.ttl - 1
 
         self.header.flags = 7 # 111
@@ -173,18 +214,17 @@ class Message:
         self.header.dest = header_request.src
 
         self.content = content
-
+        print "aquuuuuuui"
         self.header.setup(len(content))
-
+        print self.content
         return 0
 
 
     def encode(self):
-        msg_byte = self.header.encode()
+        msg_bytes = self.header.encode()
 
         if self.content is not None:
-            msg_byte.write(self.content)
-        #msg_byte.seek(0)
-        return msg_byte
-
+            msg_bytes.write(self.content)
+       
+        return msg_bytes
 

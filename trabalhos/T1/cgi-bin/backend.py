@@ -33,6 +33,29 @@ for maq in maq_ports:
         data = msg.encode()
         data.seek(0)
         print sys.getsizeof(data)
-        print sock.sendall(data.read())
-        #print msg.header
-    #print(exec_list)
+        sock.sendall(data.read())
+        
+        data = sock.recv(1024)
+        #sock.close()
+        print len(data)
+        print data
+        '''while not data: 
+            try:
+                # Recebe os dados atraves do socket
+                data = sock.recv(1024)
+                f = io.BytesIO(data)
+                print "oi"
+                print sys.getsizeof(data)
+                print sys
+                # Se houve dados
+                if data:
+                    request = Message()
+                    request.decode(f)
+
+                    print request.header
+                    
+                else:
+                    raise error('Desconectado')
+            except:
+
+                sock.close()'''
