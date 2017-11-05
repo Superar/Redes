@@ -54,7 +54,7 @@ else:
     print('<html>')
     if len(result) > 0:
         for s in result:
-            print('<h1>%s</h1>' % s)
+            print('%s' % s)
     else:
         print('<h1>Selecione algo</h1>')
 

@@ -19,31 +19,34 @@ sock.bind((HOST, PORT))
 commands = sys.stdin.readlines()
 commands_str = ''.join(commands)
 
-for maq in maq_ports:
+
+for maq in sorted(maq_ports.keys()):
     regex = '(?:' + maq + r')\S+(?=\n)'
     exec_list = re.findall(regex, commands_str)
     exec_list = [c.split('#') for c in exec_list]
-   
-    try: 
-        sock.connect(('localhost', maq_ports[maq]))
-    except Exception as ex:
-        print 'backend.py'
-        print ex
-
-    for cmd in exec_list:
-        msg = Message()
-        msg.request('127.0.0.2', cmd[1:], 1)
-        data = msg.encode()
-        data.seek(0)
-
-        sock.sendall(data.read())
-        
-        data_response = sock.recv(1024)
-        buffer = io.BytesIO(data_response)
-        response = Message()
-        response.decode(buffer)
-
-        print response.header
-        print response.content
     
-    sock.shutdown()
+    if exec_list:
+        print '<h1>' + maq + '</h1>'
+        try: 
+            sock.connect(('localhost', maq_ports[maq]))
+        except Exception as ex:
+            print 'backend.py'
+            print ex
+
+        for cmd in exec_list:       
+            print '<h2>' + cmd[1] + '</h2>'
+            msg = Message()
+            msg.request('127.0.0.2', cmd[1:], 1)
+            data = msg.encode()
+            data.seek(0)
+
+            sock.sendall(data.read())
+            
+            data_response = sock.recv(1024)
+            buffer = io.BytesIO(data_response)
+            response = Message()
+            response.decode(buffer)
+
+            print '<pre>' + response.content + '</pre>'
+        
+       # sock.shutdown(socket.SHUT_RDWR)

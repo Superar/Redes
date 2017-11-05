@@ -31,10 +31,13 @@ class Daemon(threading.Thread):
                 buffer = io.BytesIO(data)
                 # Se houve dados
                 if data:
+                   
                     request = Message()
                     request.decode(buffer)
-
+                    print request.header
                     response = self.get_response(request)            
+                    print response.header
+                    print response.content
                     response = response.encode()
                     response.seek(0)
 
@@ -46,20 +49,22 @@ class Daemon(threading.Thread):
                 return False
     
     def get_response(self, request):
-        
         cmd = [request.header.get_protocol_command()]
-         
-        if request.header.options is not None:
-            cmd.append(str(request.header.options))
+        if request.header.options is not None and len(request.header.options) > 0:
+           cmd.append(str(request.header.options))
 
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         content = p.stdout.read()
+        erro = p.stderr.read()
         p.stdout.close()
+        p.stderr.close()
 
+        if len(content) == 0:
+            content = erro
+
+        print content
         msg = Message()
-        
         msg.response(request.header, content)
-        print msg.content
         return msg
         
 
