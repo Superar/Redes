@@ -3,6 +3,8 @@ import re
 import struct
 from socket import inet_aton
 from socket import inet_ntoa
+from socket import gethostbyname
+from socket import gethostname
 
 COMANDO_DICT = {'ps':1,
                 'df':2,
@@ -124,25 +126,23 @@ class Header:
         return header_bytes
     
     def get_header_checksum(self):
-        hc = (self.version << 4) | self.ihl
+        hc = ((self.version << 4) | self.ihl) << 8        
         
-        hc = hc + (self.total_length >> 8) + (self.total_length & 0x00FF)
+        hc = hc + (self.total_length)
 
-        hc = hc + (self.id >> 8) + (self.id & 0x00FF)
+        hc = hc + self.id 
 
-        hc = hc + (self.flags << 5)
+        hc = hc + (self.flags << 13)
 
-        hc = hc + self.ttl
-
-        hc = hc + self.protocol
+        hc = hc + ((self.ttl << 8) | self.protocol)
         
         sum_addr = 0
         for i in range(0,4,2):
             byte = struct.unpack('!H', self.src[i] + self.src[i + 1])[0]
-            sum_addr = sum_addr +  (byte >> 8) + (byte & 0x00ff)
+            sum_addr = sum_addr + byte
 
             byte = struct.unpack('!H', self.dest[i] + self.dest[i + 1])[0]
-            sum_addr = sum_addr +  (byte >> 8) + (byte & 0x00ff)
+            sum_addr = sum_addr + byte
 
         hc = hc + sum_addr
 
@@ -150,12 +150,14 @@ class Header:
 
             for i in range(0, len(self.options) - 1, 2):
                 byte = struct.unpack('!H', self.options[i] + self.options[i+1])[0]
-                hc = hc + (byte >> 8) + (byte & 0x00ff)
+                hc = hc + byte
             
             if (len(self.options) - 2) > i:
                 byte = struct.unpack('!H', self.options[i + 2] + '\x00')[0]
-                hc = hc + (byte >> 8) 
-
+                hc = hc + byte
+        
+        carry = hc >> 16
+        hc = (hc & 0xffff) + carry
 
         return hc
     
@@ -198,7 +200,7 @@ class Message:
         
         self.header.protocol = COMANDO_DICT[args[0]]
 
-        self.header.src = inet_aton('127.0.0.1')
+        self.header.src = inet_aton(gethostbyname(gethostname()))
 
         self.header.dest = inet_aton(addr)
 
@@ -241,7 +243,18 @@ class Message:
 
     def send(self, sock):
         self.send_only(sock)
-        return Message.recv(sock)
+        
+        response = Message.recv(sock)
+
+        hc = response.header.hc - response.header.get_header_checksum()
+
+        if (hc == 0) and (response.header.id == self.header.id):
+            return response
+        else:
+            response.content = "Pacote invalido"
+            response.header.setup(len(response.content))
+            return response
+
 
     @classmethod
     def recv(cls, sock):

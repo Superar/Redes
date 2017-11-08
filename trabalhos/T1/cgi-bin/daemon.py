@@ -43,7 +43,7 @@ class Daemon(threading.Thread):
                 request = Message.recv(self.dest_sock)
 
                 # Se recebeu dados dados
-                if request:
+                if request & request.flags == 0:
                     # Gera a resposta correspondente
                     response = self.get_response(request)            
                     
