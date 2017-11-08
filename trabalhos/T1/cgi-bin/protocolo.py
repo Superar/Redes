@@ -150,9 +150,12 @@ class Header:
 
             for i in range(0, len(self.options) - 1, 2):
                 byte = struct.unpack('!H', self.options[i] + self.options[i+1])[0]
-                hc = hc + byte
+                hc = hc + (byte >> 8) + (byte & 0x00ff)
+            
+            if (len(self.options) - 2) > i:
+                byte = struct.unpack('!H', self.options[i + 2] + '\x00')[0]
+                hc = hc + (byte >> 8) 
 
-        # precisa arrumar quando impar
 
         return hc
     

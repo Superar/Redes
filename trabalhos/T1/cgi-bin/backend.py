@@ -57,19 +57,6 @@ for maq in sorted(maq_addrs.keys()):
                 
                 response = msg.send(sock)
 
-                #data = msg.encode()
-                #data.seek(0)
-
-                # Envio dos dados
-                #sock.sendall(data.read())
-                
-                # Recebimento de resposta e decodificacao
-                #data_response = sock.recv(20)
-                #buffer = io.BytesIO(data_response)
-                #response = Message()
-                #response.decode(buffer)
-                #print response
-
                 print '<pre>' + response.content + '</pre>'
         finally:
             # Ao final, socket e fechado para se conectar a proxima maquina
