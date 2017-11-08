@@ -8,7 +8,7 @@ from protocolo import *
 # Definicao do localhost
 HOST = '127.0.0.1'
 # Definicao da porta padrao
-PORT = 9000
+PORT = 9001
 
 class Daemon(threading.Thread):
     ''' Classe representante de um Daemon
@@ -36,36 +36,21 @@ class Daemon(threading.Thread):
             decodifica-lo, executar o comando com os parametros indicados
             e enviar pela mesma conexao o pacote com a saida do comando indicado
         '''
-        
-        tam = 1024
 
         while True:
             try:
                 # Recebe os dados atraves do socket
-                data = self.dest_sock.recv(tam)
-                buffer = io.BytesIO(data)
+                request = Message.recv(self.dest_sock)
 
                 # Se recebeu dados dados
-                if data:
-                    # Decodifica o pacote 
-                    request = Message()
-                    request.decode(buffer)
-                    print request.header
-
+                if request:
                     # Gera a resposta correspondente
                     response = self.get_response(request)            
-                    print response.header
-                    print response.content
-
-                    # Cria o pacote com a resposta
-                    response = response.encode()
-                    response.seek(0)
-
-                    # Envia resposta
-                    self.dest_sock.sendall(response.read())
+                    
+                    # Apenas envia a resposta da requisicao
+                    response.send_only(self.dest_sock)
                 else:
                     # Backend mandou um shutdown
-                    print 'Desconectado'
                     self.dest_sock.close()
                     raise error('Desconectado')
             except:
@@ -77,7 +62,6 @@ class Daemon(threading.Thread):
             De acordo com uma requisicao recebida em um pacote conforme indicado
             em protocolo.py
         '''
-
         # Cria lista com nome do comando a ser executado e argumentos
         cmd = [request.header.get_protocol_command()]
         if request.header.options is not None and len(request.header.options) > 0:
@@ -96,7 +80,6 @@ class Daemon(threading.Thread):
             content = erro
 
         # Retorna a saida de execucao
-        print content
         msg = Message()
         msg.response(request.header, content)
         return msg
@@ -112,8 +95,6 @@ if __name__=='__main__':
     except getopt.GetoptError:
       print 'usage: pyhton daemon [-h, -p port]'
       sys.exit(2)
-    print opts
-    print args
     
     for opt, arg in opts:
         if opt in ("-p", "--port"):
@@ -127,7 +108,7 @@ if __name__=='__main__':
     # Socket utilizado pela maquina para se conectar com o backend
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((HOST, PORT))
+    sock.bind(('localhost', PORT))
 
     threads = list()
 

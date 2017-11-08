@@ -9,6 +9,8 @@ COMANDO_DICT = {'ps':1,
                 'finger':3,
                 'uptime':4}
 
+MIN_TAM_HEADER = 20 # 20 bytes
+
 class Header:
 
     def __init__(self):
@@ -40,6 +42,8 @@ class Header:
         self.options = None
 
     def __str__(self):
+        src_addr = 'None' if self.src is None else inet_ntoa(self.src)
+        dest_addr = 'None' if self.dest is None else inet_ntoa(self.dest)
         return  'Version: ' + str(self.version) \
               + '\nIHL: ' + str(self.ihl) \
               + '\nTotal Length: ' + str(self.total_length) \
@@ -48,10 +52,11 @@ class Header:
               + '\nTTL: ' + str(self.ttl) \
               + '\nProtocol: ' + str(self.protocol) \
               + '\nHeader Checksum: ' + str(self.hc) \
-              + '\nSource: ' + inet_ntoa(self.src) \
-              + '\nDestination: ' + inet_ntoa(self.dest) \
+              + '\nSource: ' + src_addr \
+              + '\nDestination: ' + dest_addr \
               + '\nOptions: ' + str(self.options) 
-
+   
+   # Dado um packet em binario, decodifica-o inicializando os campos do cabecalho 
     def decode(self, packet):
         try:
             word = struct.unpack('!HH', packet.read(4))
@@ -75,14 +80,17 @@ class Header:
             self.src = packet.read(4)
             self.dest = packet.read(4)
             
-            nro_options = self.ihl - 5
-
-            self.options = packet.read(nro_options * 4)
-            self.options = re.sub(b'\x00', '', self.options)
+            self.set_options(packet)
 
         except Exception as e:
             print e
-
+    
+    def set_options(self, data):
+        self.options = data.read((self.ihl - 5) * 4)
+        self.options = re.sub(b'\x00', '', self.options)
+   
+   # Codifica os campos do cabecalho no formato da especificacao do cabecalho em binario
+    # Retorna o cabecalho em binario
     def encode(self):
         header_bytes = io.BytesIO()
         
@@ -146,8 +154,9 @@ class Header:
 
         # precisa arrumar quando impar
 
-        return hc        
-
+        return hc
+    
+    # Configura os campos calculados (ihl, length, hc) com os valores especificados em seus campos
     def setup(self, size_content):
         self.ihl = 5
         if self.options is not None:
@@ -157,7 +166,8 @@ class Header:
                 self.ihl = self.ihl + 1
         self.total_length = (self.ihl * 4) + size_content
         self.hc = self.get_header_checksum()
-
+    
+    # Decodifica o campo protocolo e retorna o nome do comando que representa
     def get_protocol_command(self):
         dict_contrario = dict(zip(COMANDO_DICT.values(), COMANDO_DICT.keys()))
         return dict_contrario[self.protocol]
@@ -167,13 +177,15 @@ class Message:
     def __init__(self):
         self.header = Header()
         self.content = None
-
+    
+    # Decodifica um apanhado de bytes em um objeto Message
     def decode(self, packet):
         # Faz a decodificacao dos primeiros bytes do cabecalho
         self.header.decode(packet)
         # Como o cabecalho foi consumido, o restante e conteudo
         self.content = packet.read()
     
+    # Monta um pacote de requisicao de um comando
     def request(self, addr, args, id_request, ttl=10):
         self.header.id = id_request
 
@@ -192,7 +204,7 @@ class Message:
         self.header.setup(0)
 
         return 0
-        
+    # Monta um pacote de resposta a uma requisicao
     def response(self, header_request, content):
         self.header.id = header_request.id
         self.header.ttl = header_request.ttl - 1
@@ -209,11 +221,45 @@ class Message:
         self.header.setup(len(content))
         return 0
 
-
+    # Codifica os atributos da Message em um conjunto de bytes
     def encode(self):
         msg_bytes = self.header.encode()
 
         if self.content is not None:
             msg_bytes.write(self.content)
         return msg_bytes
+    
+    def send_only(self, sock):
+        data = self.encode()
+        data.seek(0)
+        # Envio dos dados
+        sock.sendall(data.read()) #TODO: Tratar erro
+        
+
+    def send(self, sock):
+        self.send_only(sock)
+        return Message.recv(sock)
+
+    @classmethod
+    def recv(cls, sock):
+        response = None
+        # Recebe o cabecalho para verificar a quantidade de dados que falta
+        header_response = sock.recv(20)
+        
+        if len(header_response) > 0:
+            buffer = io.BytesIO(header_response)
+            header = Header()
+            header.decode(buffer)
+        
+            response = Message()
+            response.header = header
+
+            if header.total_length > 20:
+                data_response = sock.recv(header.total_length - 20)
+                buffer = io.BytesIO(data_response)
+                response.header.set_options(buffer)
+                response.content = buffer.read()
+
+        return response
+
 

@@ -4,15 +4,17 @@ import re
 
 from protocolo import *
 
-
+# Caracteres que indicam parametros maliciosos
 exclude_list = ['|', '>', ';']
 
-maq_ports = {'maq1': 9000,
-           'maq2': 9000,
-           'maq3': 9000}
+# Mapeamento das maquinas e seus respectivos enderecos 
+# (no nosso caso, as portas onde cada daemons esta escutando)
+maq_addrs = {'maq1': ['127.0.0.1', 9001],
+             'maq2': ['127.0.0.1', 9002],
+             'maq3': ['127.0.0.1',9003]}
 
-HOST = '127.0.0.1'
-PORT = 9001
+# Porta utilizada pelo backend para a comunicacao atraves do socket
+PORT = 9000
 
 # Comandos recebidos do webserver
 commands = sys.stdin.readlines()
@@ -25,7 +27,7 @@ if [x for x in exclude_list if x in commands_str]:
     raise ValueError
 
 # Conexao e execucao dos comandos para cada maquina
-for maq in sorted(maq_ports.keys()):
+for maq in sorted(maq_addrs.keys()):
 
     # Encontra todos os comandos a serem executados para a maquina atual
     regex = '(?:' + maq + r')\S+(?=\n)'
@@ -38,7 +40,8 @@ for maq in sorted(maq_ports.keys()):
             # Conexao
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.connect(('localhost', maq_ports[maq]))
+            # Se conecta com a maquina especificada
+            sock.connect((maq_addrs[maq][0], maq_addrs[maq][1]))
         except Exception as ex:
             # Conexao malsucedida
             print 'backend.py'
@@ -47,21 +50,25 @@ for maq in sorted(maq_ports.keys()):
             # Conexao bem-sucedida
             # Envia cada comando separadamente
             for cmd in exec_list:
-                # Criacao do pacote       
                 print '<h2>' + cmd[1] + '</h2>'
+                # Criacao do pacote de requisicao       
                 msg = Message()
-                msg.request('127.0.0.2', cmd[1:], 1)
-                data = msg.encode()
-                data.seek(0)
+                msg.request(maq_addrs[maq][0], cmd[1:], 1)
+                
+                response = msg.send(sock)
+
+                #data = msg.encode()
+                #data.seek(0)
 
                 # Envio dos dados
-                sock.sendall(data.read())
+                #sock.sendall(data.read())
                 
                 # Recebimento de resposta e decodificacao
-                data_response = sock.recv(1024)
-                buffer = io.BytesIO(data_response)
-                response = Message()
-                response.decode(buffer)
+                #data_response = sock.recv(20)
+                #buffer = io.BytesIO(data_response)
+                #response = Message()
+                #response.decode(buffer)
+                #print response
 
                 print '<pre>' + response.content + '</pre>'
         finally:
