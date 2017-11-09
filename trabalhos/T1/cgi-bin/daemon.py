@@ -43,10 +43,10 @@ class Daemon(threading.Thread):
                 request = Message.recv(self.dest_sock)
 
                 # Se recebeu dados dados
-                if request & request.flags == 0:
+                if request and request.header.flags == 0:
                     # Gera a resposta correspondente
                     response = self.get_response(request)            
-                    
+
                     # Apenas envia a resposta da requisicao
                     response.send_only(self.dest_sock)
                 else:
@@ -65,7 +65,7 @@ class Daemon(threading.Thread):
         # Cria lista com nome do comando a ser executado e argumentos
         cmd = [request.header.get_protocol_command()]
         if request.header.options is not None and len(request.header.options) > 0:
-           cmd.append(str(request.header.options))
+           cmd = cmd + str(request.header.options).split(' ')
 
         # Abre um sub-processo e executa o comando
         # Armazenando as saidas de stdout e stderr
