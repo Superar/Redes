@@ -31,7 +31,7 @@ try:
 
     # Cria processo do backend
     p = subprocess.Popen(['python', 'backend.py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    
+
     # Envia comandos no formato: maquina#comando#args
     for item in send_backend:
         p.stdin.write('#'.join(item))
@@ -43,19 +43,19 @@ try:
         result.append(s)
     p.stdout.close()
 
-except:
-    print('Content-type:text/html')
+except Exception:
+    print 'Content-type:text/html'
     print
-    print('<html><body> ERROR </body></html>')
+    print '<html><body> ERROR </body></html>'
 
 else:
-    print('Content-type:text/html')
+    print 'Content-type:text/html'
     print
-    print('<html>')
+    print '<html>'
     if len(result) > 0:
         for s in result:
-            print('%s' % s)
+            print '%s' % s
     else:
-        print('<h1>Selecione algo</h1>')
+        print '<h1>Selecione algo</h1>'
 
-    print('</html>')
+    print '</html>'

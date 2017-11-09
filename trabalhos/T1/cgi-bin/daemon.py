@@ -3,7 +3,7 @@ import threading
 import sys
 import getopt
 import subprocess
-from protocolo import *
+from protocolo import Message
 
 # Definicao do localhost
 HOST = '127.0.0.1'
@@ -23,7 +23,7 @@ class Daemon(threading.Thread):
             e inicializa as configuracoes do socket do cliente
             (de onde recebera e para onde enviara os pacotes)
         '''
- 
+
         threading.Thread.__init__(self)
         self.ip = ip
         self.port = port
@@ -45,18 +45,18 @@ class Daemon(threading.Thread):
                 # Se recebeu dados dados
                 if request and request.header.flags == 0:
                     # Gera a resposta correspondente
-                    response = self.get_response(request)            
+                    response = self.get_response(request)
 
                     # Apenas envia a resposta da requisicao
                     response.send_only(self.dest_sock)
                 else:
                     # Backend mandou um shutdown
                     self.dest_sock.close()
-                    raise error('Desconectado')
-            except:
+                    raise Exception('Desconectado')
+            except Exception:
                 self.dest_sock.close()
                 return False
-    
+
     def get_response(self, request):
         ''' Executa comandos em um sub-processo
             De acordo com uma requisicao recebida em um pacote conforme indicado
@@ -65,7 +65,7 @@ class Daemon(threading.Thread):
         # Cria lista com nome do comando a ser executado e argumentos
         cmd = [request.header.get_protocol_command()]
         if request.header.options is not None and len(request.header.options) > 0:
-           cmd = cmd + str(request.header.options).split(' ')
+            cmd = cmd + str(request.header.options).split(' ')
 
         # Abre um sub-processo e executa o comando
         # Armazenando as saidas de stdout e stderr
@@ -83,28 +83,27 @@ class Daemon(threading.Thread):
         msg = Message()
         msg.response(request.header, content)
         return msg
-        
 
 if __name__=='__main__':
     argv = sys.argv[1:]
-   
+
     # Tratamento das opcoes na inicializacao do daemon em linha de comando
-    # Argumento indica a porta a ser utilizada 
+    # Argumento indica a porta a ser utilizada
     try:
-      opts, args = getopt.getopt(argv,'hp:',['help','port='])
+        opts, args = getopt.getopt(argv, 'hp:', ['help', 'port='])
     except getopt.GetoptError:
-      print 'usage: pyhton daemon [-h, -p port]'
-      sys.exit(2)
-    
+        print 'usage: pyhton daemon [-h, -p port]'
+        sys.exit(2)
+
     for opt, arg in opts:
         if opt in ("-p", "--port"):
-             try:
-                 PORT = int(arg)
-             except Exception as e:
-                 print 'Numero de porta invalido'
-    
+            try:
+                PORT = int(arg)
+            except Exception as e:
+                print 'Numero de porta invalido'
+
     print 'Listening on port ' + str(PORT)
-	
+
     # Socket utilizado pela maquina para se conectar com o backend
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
