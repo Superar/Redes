@@ -288,8 +288,12 @@ class Message(object):
         data = self.encode()
         data.seek(0)
         # Envio dos dados
-        sock.sendall(data.read()) #TODO: Tratar erro
-
+        try:
+            sock.sendall()
+        except Exception as e:
+            print 'Falha no envio:'
+            print e
+            raise RuntimeError('Falha no envio de pacote')
 
     def send(self, sock):
         ''' Envia os dados para ``sock`` e recebe a resposta logo em seguida '''
