@@ -2,16 +2,16 @@ import sys
 import socket
 import re
 
-from protocolo import *
+from protocolo import Message
 
 # Caracteres que indicam parametros maliciosos
 exclude_list = ['|', '>', ';']
 
-# Mapeamento das maquinas e seus respectivos enderecos 
+# Mapeamento das maquinas e seus respectivos enderecos
 # (no nosso caso, as portas onde cada daemons esta escutando)
 maq_addrs = {'maq1': ['127.0.0.1', 9001],
              'maq2': ['127.0.0.1', 9002],
-             'maq3': ['127.0.0.1',9003]}
+             'maq3': ['127.0.0.1', 9003]}
 
 # Porta utilizada pelo backend para a comunicacao atraves do socket
 PORT = 9000
@@ -33,7 +33,7 @@ for maq in sorted(maq_addrs.keys()):
     regex = '(?:' + maq + r')\S+(?=\n)'
     exec_list = re.findall(regex, commands_str)
     exec_list = [c.split('#') for c in exec_list]
-    
+
     if exec_list:
         print '<h1>' + maq + '</h1>'
         try:
@@ -51,10 +51,10 @@ for maq in sorted(maq_addrs.keys()):
             # Envia cada comando separadamente
             for cmd in exec_list:
                 print '<h2>' + cmd[1] + '</h2>'
-                # Criacao do pacote de requisicao       
+                # Criacao do pacote de requisicao
                 msg = Message()
                 msg.request(maq_addrs[maq][0], cmd[1:], 1)
-                
+
                 response = msg.send(sock)
 
                 print '<pre>' + response.content + '</pre>'
