@@ -14,6 +14,10 @@ COMANDO_DICT = {'ps':1,
 MIN_TAM_HEADER = 20 # 20 bytes
 
 class Header:
+    """ Classe que representa o cabecalho de um pacote.
+    O cabecalho contem diversos campos. Os tamanhos em bits e os
+    conteudos estao especificados no construtor abaixo
+    """
 
     def __init__(self):
         # Version (4 bits)
@@ -44,6 +48,8 @@ class Header:
         self.options = None
 
     def __str__(self):
+        """ Metodo para conversao do header para string. Facilita leitura e impressao do cebecalho """
+        
         src_addr = 'None' if self.src is None else inet_ntoa(self.src)
         dest_addr = 'None' if self.dest is None else inet_ntoa(self.dest)
         return  'Version: ' + str(self.version) \
@@ -58,8 +64,11 @@ class Header:
               + '\nDestination: ' + dest_addr \
               + '\nOptions: ' + str(self.options) 
    
-   # Dado um packet em binario, decodifica-o inicializando os campos do cabecalho 
     def decode(self, packet):
+        """ Decodificacao de um pacote binario.
+            Dado um ``packet`` em binario, decodifica-o inicializando os campos do cabecalho
+        """
+
         try:
             word = struct.unpack('!HH', packet.read(4))
             field = word[0] >> 8
@@ -91,9 +100,13 @@ class Header:
         self.options = data.read((self.ihl - 5) * 4)
         self.options = re.sub(b'\x00', '', self.options)
    
-   # Codifica os campos do cabecalho no formato da especificacao do cabecalho em binario
-    # Retorna o cabecalho em binario
     def encode(self):
+        """ Codificacao do cabecalho em uma estrutura de bits.
+
+            Codifica os campos do cabecalho no formato de especificacao do cabecalho em binario
+            Retorna o cabecalho em binario
+        """
+
         header_bytes = io.BytesIO()
         
         byte = ((self.version << 4) | self.ihl) << 8
@@ -126,6 +139,13 @@ class Header:
         return header_bytes
     
     def get_header_checksum(self):
+        """ Calculo do cecksum do cabecalho.
+        
+            Checksum eh a soma de todos os bits presentes no cabecalho.
+            Caso haja um carry no resultado, este bit deve ser removido e somado
+            ao resultado, permitindo que o checksum possua 16 bits. 
+        """
+
         hc = ((self.version << 4) | self.ihl) << 8        
         
         hc = hc + (self.total_length)
@@ -161,8 +181,9 @@ class Header:
 
         return hc
     
-    # Configura os campos calculados (ihl, length, hc) com os valores especificados em seus campos
     def setup(self, size_content):
+        """ Configura os campos calculados (ihl, length, hc) com os valores especificados em seus campos """
+
         self.ihl = 5
         if self.options is not None:
             self.ihl = self.ihl + len(self.options)//4
@@ -172,19 +193,27 @@ class Header:
         self.total_length = (self.ihl * 4) + size_content
         self.hc = self.get_header_checksum()
     
-    # Decodifica o campo protocolo e retorna o nome do comando que representa
     def get_protocol_command(self):
+        """ Decodifica o campo protocolo e retorna o nome do comando que representa """
+        
         dict_contrario = dict(zip(COMANDO_DICT.values(), COMANDO_DICT.keys()))
         return dict_contrario[self.protocol]
 
 class Message:
-    
+    """ Classe que representa uma mensagem a ser enviada.
+
+    Atributos:
+    ``header`` - Cabecalho da mensagem
+    ``content`` - Conteudo da mensagem
+    """   
+ 
     def __init__(self):
         self.header = Header()
         self.content = None
     
-    # Decodifica um apanhado de bytes em um objeto Message
     def decode(self, packet):
+        """ Decodifica um apanhado de bytes em um objeto Message """
+
         # Faz a decodificacao dos primeiros bytes do cabecalho
         self.header.decode(packet)
         # Como o cabecalho foi consumido, o restante e conteudo
@@ -192,6 +221,14 @@ class Message:
     
     # Monta um pacote de requisicao de um comando
     def request(self, addr, args, id_request, ttl=10):
+        """ Monta um pacote de requisicao de um comando.
+
+        ``addr`` - Endereco a ser enviado o pacote
+        ``args`` - Argumentos do comando. Primeira posicao indica o nome do comando
+        ``id_request`` - Identificador do comando
+        ``ttl`` - Tempo de vida do pacote
+        """
+
         self.header.id = id_request
 
         self.header.ttl = ttl
@@ -209,8 +246,14 @@ class Message:
         self.header.setup(0)
 
         return 0
-    # Monta um pacote de resposta a uma requisicao
+    
     def response(self, header_request, content):
+        """ Monta um pacote de resposta a uma requisicao.
+            
+        ``header_request`` - Cabecalho da requisicao a ser respondida
+        ``content`` - Conteudo da resposta. No caso, a saida da execucao do programa.
+        """
+
         self.header.id = header_request.id
         self.header.ttl = header_request.ttl - 1
 
@@ -226,8 +269,9 @@ class Message:
         self.header.setup(len(content))
         return 0
 
-    # Codifica os atributos da Message em um conjunto de bytes
     def encode(self):
+        """ Codifica os atributos da Message em um conjunto de bytes """
+
         msg_bytes = self.header.encode()
 
         if self.content is not None:
@@ -235,6 +279,8 @@ class Message:
         return msg_bytes
     
     def send_only(self, sock):
+        """ Apenas envia os dados para ``sock``, sem esperar uma resposta """
+
         data = self.encode()
         data.seek(0)
         # Envio dos dados
@@ -242,6 +288,8 @@ class Message:
         
 
     def send(self, sock):
+        """ Envia os dados para ``sock`` e recebe a resposta logo em seguida """
+
         self.send_only(sock)
         
         response = Message.recv(sock)
@@ -258,16 +306,20 @@ class Message:
 
     @classmethod
     def recv(cls, sock):
+        """ Recebe os dados pelo socket e monta uma mensagem com estes dados """
+
         response = None
         # Recebe o cabecalho para verificar a quantidade de dados que falta
         header_response = sock.recv(20)
-        
+
+ 
         if len(header_response) > 0:
             buffer = io.BytesIO(header_response)
             header = Header()
             header.decode(buffer)
+            
         
-            response = Message()
+            response = cls()
             response.header = header
 
             if header.total_length > 20:
